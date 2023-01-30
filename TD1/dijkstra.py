@@ -75,7 +75,7 @@ def graph_fig2_a():
     g.addArc("a", "c", 3)
     g.addArc("b",  "a", 5)
     g.addArc("b",  "c", 3)
-    g.addArc("b",  "c", 9)
+    g.addArc("b",  "g", 9)
     g.addArc("c",  "d", 2)
     g.addArc("c",  "f", 6)
     g.addArc("c",  "g", 8)
