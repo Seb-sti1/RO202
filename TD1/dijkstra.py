@@ -43,6 +43,7 @@ def graph_ex2():
     g.addArc("Londres",  "Edimbourg", 2)
     g.addArc("Amsterdam",  "Hambourg", 2)
     g.addArc("Amsterdam",  "Oslo", 8)
+    g.addArc("Amsterdam",  "Londre", 1)
     g.addArc("Stockholm",  "Oslo", 2)
     g.addArc("Stockholm",  "Rana", 5)
     g.addArc("Berlin",  "Amsterdam", 2)
@@ -54,6 +55,7 @@ def graph_ex2():
     g.addArc("Oslo",  "Rana", 2)
 
     return g, "Paris"
+
 
 def graph_fig2_a():
     nodes = []
