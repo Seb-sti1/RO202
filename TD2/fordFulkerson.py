@@ -3,9 +3,20 @@ import graph
 import sys
 
 def main():
+    print("Executer krustal pour :")
+    print("1) le graphe de l'ex 1")
+    print("2) le graphe de gauche de la fig 1")
+    print("3) le graphe de droite de la fig 1")
+
+    n = int(input())
 
     # Le poids des arcs de ce graphe correspondent aux capacités
-    g = example()
+    if n == 1:
+        g = graph_ex1()
+    elif n == 2:
+        g = graph_fig1_a()
+    elif n == 3:
+        g = graph_fig1_b()
 
     # Le poids des arcs de ce graphe correspondent au flot
     flow = fordFulkerson(g, "s", "t")
@@ -13,7 +24,7 @@ def main():
     print(flow)
     
 # Fonction créant un graphe sur lequel sera appliqué l'algorithme de Ford-Fulkerson
-def example():
+def graph_ex1():
         
     g = graph.Graph(np.array(["s", "a", "b", "c", "d", "e", "t"]))
 
@@ -28,6 +39,44 @@ def example():
     g.addArc("d", "t", 6)
     g.addArc("e", "b", 4)
     g.addArc("e", "t", 2)
+    
+    return g
+
+def graph_fig1_a():
+    g = graph.Graph(np.array(["s", "1", "2", "3", "4", "t"]))
+
+    g.addArc("s", "1", 16)
+    g.addArc("s", "2", 13)
+    g.addArc("2", "1", 4)
+    g.addArc("1", "2", 10)
+    g.addArc("1", "3", 12)
+    g.addArc("3", "2", 9)
+    g.addArc("2", "4", 14)
+    g.addArc("4", "3", 7)
+    g.addArc("4", "t", 4)
+    g.addArc("3", "t", 20)
+    
+    return g
+
+
+def graph_fig1_b():
+    g = graph.Graph(np.array(["s", "A", "B", "C", "D", "E", "F", "t"]))
+
+    g.addArc("s", "A", 10)
+    g.addArc("s", "C", 12)
+    g.addArc("s", "E", 15)
+    g.addArc("A", "C", 4)
+    g.addArc("A", "D", 15)
+    g.addArc("A", "B", 9)
+    g.addArc("B", "D", 15)
+    g.addArc("B", "t", 10)
+    g.addArc("C", "E", 4)
+    g.addArc("C", "D", 8)
+    g.addArc("D", "t", 4)
+    g.addArc("D", "F", 20)
+    g.addArc("E", "F", 16)
+    g.addArc("F", "t", 10)
+    g.addArc("F", "C", 10)
     
     return g
 
