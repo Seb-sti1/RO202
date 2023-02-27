@@ -1,8 +1,47 @@
 import numpy as np
 import sys
 
-class Tableau:
 
+def ex1():
+    A = np.array([[1, -1], [0, 1], [8, 5]], dtype=float)
+
+    c = np.array([2, 1], dtype=float)
+    b = np.array([4, 8, 56], dtype=float)
+
+    return Tableau(A, b, c, False)
+
+
+def ex2():
+    A = np.array([[1, -2, 1, -1, 0, 0], [0, 1, 3, 0, 1, 0], [2, 0, 1, 2, 0, 1]], dtype=float)
+
+    c = np.array([2, -3, 5, 0, 0, 0], dtype=float)
+    b = np.array([4, 6, 7], dtype=float)
+
+    return Tableau(A, b, c, True)
+
+
+def main():
+    # Si le problème n'est pas sous forme normale, il faut le transformer
+    normalForm = False
+
+    # Si on résout un problème sous forme normale
+    if normalForm:
+
+        # ** 1er cas - PL Ax = b et une base est fournie (aucune variable d'écart n'est ajoutée au problème)
+        t1 = ex2()
+        t1.basis = np.array([0, 2, 5])
+        t1.applySimplex()
+
+    # Si on résout un problème qui n'est pas sous forme normale
+    else:
+
+        # ** 2ème cas - PL Ax <= b, ajouter des variables d'écart et les utiliser comme base
+        t2 = ex1()
+        t2.addSlackAndSolve()
+        t2.displaySolution()
+
+
+class Tableau:
     # Nombre de variables
     n = 0
 
@@ -42,45 +81,6 @@ class Tableau:
         self.bestSolution = None
         self.bestObjective = 0.0
 
-    def ex1(): 
-
-        A = np.array([[1, -1], [0, 1], [8, 5]], dtype = float)
-
-        c = np.array([2, 1], dtype = float)
-        b = np.array([4, 8, 56], dtype = float)
-
-        return Tableau(A, b, c, False) 
-
-    def ex2():
-
-        A = np.array([[1, -2, 1, -1, 0, 0], [0, 1, 3, 0, 1, 0], [2, 0, 1, 2, 0, 1]], dtype = float)
-
-        c = np.array([2, -3, 5, 0, 0, 0], dtype = float)
-        b = np.array([4, 6, 7], dtype = float)
-
-        return Tableau(A, b, c, True)
-
-    def main():
-
-        # Si le problème n'est pas sous forme normale, il faut le transformer 
-        normalForm = False
-
-        # Si on résout un problème sous forme normale 
-        if normalForm:
-
-            #** 1er cas - PL Ax = b et une base est fournie (aucune variable d'écart n'est ajoutée au problème) 
-            t1 = ex2()
-            t1.basis = np.array([0, 2, 5])
-            t1.applySimplex()
-            
-        # Si on résout un problème qui n'est pas sous forme normale 
-        else: 
-
-            #** 2ème cas - PL Ax <= b, ajouter des variables d'écart et les utiliser comme base
-            t2 = ex1()
-            t2.addSlackAndSolve()
-            t2.displaySolution()
-
     # Crée un tableau avec une variable d'écart pour chaque contrainte et résoudre
     def addSlackAndSolve(self):
 
@@ -101,10 +101,10 @@ class Tableau:
         if self.DISPLAY_SIMPLEX_LOGS:
             print("Tableau initial: ")
             self.display()
-        
+
         # Perturbe chaque valeur de b pour éviter les divisions par zéro quand la base est dégénérée
         eps = 1E-7
-        
+
         for i in range(self.m):
             self.b[i] += eps
             eps *= 0.1
@@ -122,7 +122,8 @@ class Tableau:
     """
      Effectuer un pivotage. Une base doit avoir été sélectionnée
      Sortie : Vrai si une nouvelle vase a été trouvée, faux si une solution optimale est atteinte
-    """ 
+    """
+
     def pivot(self):
 
         """
@@ -150,8 +151,24 @@ class Tableau:
          * - dans l4, ne pas oublier de mettre à jour bestObjective
          *              
         """
+        eps = 1E-7
 
-        # TODO
+        for i in range(self.A.shape[0]):
+            # normalisation de chaque ligne
+            self.b[i] = self.b[i] / self.A[i, self.basis[i]]
+            self.A[i, :] = self.A[i, :] / self.A[i, self.basis[i]]
+
+        for i in range(self.A.shape[0]):
+            for j in range(self.A.shape[0]):
+                if i != j:
+                    # on retire ce qu'il faut pour que la colonne basis[i] soit à 0
+                    self.b[j] -= self.A[j, self.basis[i]] * self.b[i]
+                    self.A[j, :] -= self.A[j, self.basis[i]] * self.A[i, :]
+
+        # on fixe c[basis[i]] à 0
+        for i in range(self.A.shape[0]):
+            self.bestObjective -= self.c[self.basis[i]] * self.b[i]
+            self.c -= self.c[self.basis[i]] * self.A[i, :]
 
         # Afficher le tableau sous forme canonique
         if self.DISPLAY_SIMPLEX_LOGS:
@@ -170,9 +187,17 @@ class Tableau:
            - Comme les calculs machine sont approchés, il faut toujours faire des comparaisons numériques à un epsilon prêt. Par exemple :
                - si vous voulez tester si a est supérieur à 1, il faut écrire : a > 1 + epsilon (sinon la condition serait vérifiée pour a = 1.00000000001) 
                - si vous voulez tester si a est inférieur à 1, il faut écrire : a < 1 - epsilon (sinon la condition serait vérifiée pour a = 0.99999999999).
-        """  
+        """
 
-        # TODO
+        e = 0
+
+        for j in range(self.c.shape[0]):
+            if (self.isMinimization and self.c[j] < self.c[e] + eps) \
+                    or (not self.isMinimization and self.c[j] + eps > self.c[e]):
+                e = j
+
+        if (self.isMinimization and self.c[e] + eps >= 0) or (not self.isMinimization and self.c[e] <= 0 + eps):
+            return False
 
         """
          2.2 - Obtenir la variable quittant la base
@@ -184,13 +209,20 @@ class Tableau:
          
          Remarque : il faut une nouvelle fois faire des comparaisons à epsilon prêt.
         """
-         
-        # TODO
 
-        # 3 - Retourner vrai si une nouvelle base est trouvée et faux sinon
+        s = 0
 
-        # TODO
+        for i in range(self.A.shape[0]):
+            if self.A[i, e] > 0 + eps \
+                    and (self.A[s, e] + eps < 0 or self.b[i] / self.A[i, e] + eps < self.b[s] / self.A[s, e]):
+                s = i
 
+        if self.A[s, e] < 0 + eps:
+            return False
+
+        self.basis[s] = e
+
+        return True
 
     # Obtenir la solution du tableau qui est supposé être sous forme canonique
     def getSolution(self):
@@ -206,6 +238,7 @@ class Tableau:
      Fixer la solution du tableau self à celle du tableau tSlack
      tSlack: Tableau contenant la solution
     """
+
     def setSolution(self, tSlack):
 
         # Obtenur la solution de tSlack
@@ -228,7 +261,7 @@ class Tableau:
         values = "("
         for i in range(len(self.bestSolution)):
             if self.bestSolution[i] != 0.0:
-                variables += "x" + str(i+1) + ", "
+                variables += "x" + str(i + 1) + ", "
 
                 if isFractional(self.bestSolution[i]):
                     values += str("%.2f" % self.bestSolution[i]) + ", "
@@ -243,9 +276,10 @@ class Tableau:
      * Crée un tableau avec une variable d'écart pour chaque contrainte et utilise ces variables d'écart comme base
      * Sortie: Un tableau comportant n+m variables (les n d'origine + m variables d'écart)
     """
+
     def tableauWithSlack(self):
 
-        ASlack = np.zeros((self.m, self.n+self.m))
+        ASlack = np.zeros((self.m, self.n + self.m))
 
         # Pour chaque contrainte
         for cstr in range(self.m):
@@ -280,7 +314,7 @@ class Tableau:
         toDisplay = "\nVar.\t"
 
         for i in range(self.n):
-            toDisplay += "x" + str(i+1) + "\t"
+            toDisplay += "x" + str(i + 1) + "\t"
 
         dottedLine = ""
         for i in range(self.n + 2):
@@ -290,11 +324,11 @@ class Tableau:
 
         for l in range(self.m):
 
-            toDisplay = "(C" + str(l+1) + ")\t"
+            toDisplay = "(C" + str(l + 1) + ")\t"
 
             for c in range(self.n):
                 toDisplay += str("%.2f" % self.A[l][c]) + "\t"
-            print(toDisplay, "| ",  "%.2f" % self.b[l])
+            print(toDisplay, "| ", "%.2f" % self.b[l])
 
         print(dottedLine)
         toDisplay = "(Obj)\t"
@@ -317,6 +351,7 @@ class Tableau:
 
     Utile pour le TP du chapitre 4 sur le branch-and-bound 
     """
+
     def tableauPhase1(self, negativeRHSCount):
 
         tSlack = self.tableauWithSlack()
@@ -337,7 +372,7 @@ class Tableau:
                 APhase1[i][tSlack.n + negativeId] = -1.0
                 cPhase1[tSlack.n + negativeId] = -1
                 negativeId += 1
-                
+
         # Créer le nouveau tableau
         sPhase1 = Tableau(APhase1, self.b, cPhase1, False)
 
@@ -354,7 +389,7 @@ class Tableau:
                 sPhase1.basis[i] = i + self.n
 
         return sPhase1
-    
+
     # Appliquer l'algorithme du simplexe phase 1 et 2
     # Utile pour le TP du chapitre 4 sur le branch-and-bound 
     def applySimplexPhase1And2(self):
@@ -380,7 +415,7 @@ class Tableau:
                 tPhase1.display()
 
             while tPhase1.pivot():
-                pass # Instruction qui ne fait rien
+                pass  # Instruction qui ne fait rien
 
             if self.DISPLAY_SIMPLEX_LOGS:
                 print("Final array")
@@ -438,16 +473,16 @@ class Tableau:
                 toDisplay = "Base: "
 
                 for i in range(tSlack.m):
-                    toDisplay += str(tSlack.basis[i]+1) + ", "
+                    toDisplay += str(tSlack.basis[i] + 1) + ", "
                 print(toDisplay)
 
             tSlack.applySimplex()
             self.setSolution(tSlack)
 
 
-def isFractional(d): 
+def isFractional(d):
     return abs(round(d) - d) > 1E-6
 
-            
+
 if __name__ == '__main__':
     main()
